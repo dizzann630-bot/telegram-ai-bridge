@@ -16,7 +16,7 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse
 from telethon.errors import PasswordHashInvalidError, SessionPasswordNeededError
 
-from . import config
+from . import config, guides
 from .oauth import guard, page
 from .signing import sign, verify
 from .tg import TelegramError, new_client
@@ -90,7 +90,8 @@ async def setup_submit(request: Request):
     asyncio.create_task(_wait(pid))
     key = sign("setup", {"id": pid}, LIFETIME)
     return page("Подключение Telegram", f"""
-<p>На телефоне: <b>Telegram → Настройки → Устройства → Подключить устройство</b> и наведите камеру.</p>
+{guides.CSS}<p>На телефоне: <b>Telegram → Настройки → Устройства → Подключить устройство</b> и наведите камеру.</p>
+{guides.TELEGRAM}
 <img id="qr" src="{_qr_png(qr.url)}" alt="QR">
 <p class="muted">Открыли эту страницу на том же телефоне? Отсканировать свой экран нельзя —
 попробуйте кнопку ниже или откройте страницу на компьютере.</p>
@@ -100,6 +101,7 @@ async def setup_submit(request: Request):
 <input id="p" type="password"><button id="pb">Войти</button></div>
 <div id="ok" hidden><p><b>Готово!</b> Скопируйте строку ниже и вставьте в Render →
 ваш сервис → <b>Environment</b> → переменная <code>TELEGRAM_SESSION</code> → Save. Сервер перезапустится сам.</p>
+{guides.RENDER}
 <textarea id="s" rows="6" readonly></textarea><button id="cp">Скопировать</button>
 <p class="err">Эта строка = полный доступ к вашему Telegram. Не отправляйте её никому, даже ИИ.</p></div>
 <script>
