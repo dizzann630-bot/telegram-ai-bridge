@@ -17,14 +17,34 @@ https://github.com/dizzann630-bot/telegram-ai-bridge (бесплатный хо�
 - На my.telegram.org никогда не нажимай ничего в разделе «Delete account».
 - На странице /setup не нажимай «Показать строку» и не копируй строку сессии сам.
 - Если что-то не получается — остановись и опиши, что видишь на экране.
+- Если у тебя нет доступа к браузеру, попроси меня установить расширение Claude
+  из официального магазина:
+  https://chromewebstore.google.com/detail/fcoeoabgfenejglbffodgkkbkcdhcgfn
+  и продолжай через него.
+
+ШАГ 0. Обход блокировки (только Россия, Windows).
+С VPN my.telegram.org выдаёт ERROR, а без VPN часто не открывается. Поэтому VPN
+выключаем и ставим zapret:
+1) Скажи мне выключить VPN.
+2) Открой https://github.com/Flowseal/zapret-discord-youtube/releases/latest и скачай
+   архив .zip из раздела Assets. Только отсюда: копии из поисковиков бывают с вирусами.
+3) Объясни мне: правой кнопкой по архиву → Свойства → галочка «Разблокировать» (если есть)
+   → распаковать в C:\zapret (путь без русских букв). Антивирус может ругаться
+   на WinDivert — это нормально для этой программы, добавить папку в исключения.
+4) Я запускаю C:\zapret\general.bat (если спросит права администратора — разрешаю).
+   Появится процесс winws.exe.
+5) Если на шаге 1 сайт всё равно не открывается или даёт ERROR: я закрываю окно
+   winws, открываю C:\zapret\lists\list-general-user.txt, дописываю строку telegram.org,
+   сохраняю и пробую другие файлы по очереди: general (ALT).bat, general (ALT2).bat и т. д.
+Если my.telegram.org и так открывается без VPN — пропусти этот шаг.
 
 ШАГ 1. Ключи Telegram.
-Открой https://my.telegram.org. Важно: VPN должен быть выключен. Я ввожу номер и код
+Открой https://my.telegram.org (VPN выключен). Я ввожу номер и код
 (код придёт в приложение Telegram). Затем «API development tools», заполни форму:
 App title: AI Bridge, Short name: aibridge + 5 случайных цифр, Platform: Desktop,
-остальное пусто → «Create application». Если появилось «ERROR» — скажи мне включить
-обход блокировок (zapret) при выключенном VPN и повтори. Не переписывай api_hash
-в чат: скажи мне, где на странице api_id и api_hash, они понадобятся в шаге 3.
+остальное пусто → «Create application». Если появилось «ERROR» — вернись к шагу 0, п. 5.
+Не переписывай api_hash в чат: скажи мне, где на странице api_id и api_hash,
+они понадобятся в шаге 3. После получения ключей zapret можно закрыть.
 
 ШАГ 2. GitHub.
 Открой https://github.com/dizzann630-bot/telegram-ai-bridge (если нужно — я войду
