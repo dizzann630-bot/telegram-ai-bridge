@@ -3,6 +3,7 @@ services:
     name: telegram-ai
     runtime: docker
     plan: free
+    region: frankfurt
     healthCheckPath: /health
     envVars:
       - key: SECRET_KEY
