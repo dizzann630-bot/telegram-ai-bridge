@@ -89,37 +89,54 @@ async def setup_submit(request: Request):
     _pending[pid] = {"client": client, "qr": qr, "status": "pending", "created": time.time()}
     asyncio.create_task(_wait(pid))
     key = sign("setup", {"id": pid}, LIFETIME)
+    render_env = (f"https://dashboard.render.com/web/{config.RENDER_SERVICE_ID}/env"
+                  if config.RENDER_SERVICE_ID else "https://dashboard.render.com")
     return page("Подключение Telegram", f"""
-<p>На телефоне: <b>Telegram → Настройки → Устройства → Подключить устройство</b> и наведите камеру.</p>
+<div id="wait"><p>На телефоне: <b>Telegram → Настройки → Устройства → Подключить устройство</b> и наведите камеру.</p>
 <img id="qr" src="{_qr_png(qr.url)}" alt="QR">
 <p class="muted">Открыли эту страницу на том же телефоне? Отсканировать свой экран нельзя —
 попробуйте кнопку ниже или откройте страницу на компьютере.</p>
-<a id="tglink" href="{qr.url}"><button type="button">Открыть в Telegram на этом телефоне</button></a>
+<a id="tglink" href="{qr.url}"><button type="button">Открыть в Telegram на этом телефоне</button></a></div>
 <p id="st" class="muted">Жду сканирования…</p>
 <div id="pw" hidden><p>На аккаунте включён облачный пароль. Введите его (он никуда не сохраняется):</p>
 <input id="p" type="password"><button id="pb">Войти</button></div>
-<div id="ok" hidden><p><b>Готово!</b> Скопируйте строку ниже и вставьте в Render →
-ваш сервис → <b>Environment</b> → переменная <code>TELEGRAM_SESSION</code> → <b>Save, rebuild, and deploy</b>. Сервер перезапустится сам.</p>
-{guides.CSS}{guides.RENDER}
-<textarea id="s" rows="6" readonly></textarea><button id="cp">Скопировать</button>
-<p class="err">Эта строка = полный доступ к вашему Telegram. Не отправляйте её никому, даже ИИ.</p></div>
+<div id="ok" hidden>
+<p class="err">Не делайте скриншот и не пересылайте строку: она = полный доступ к вашему Telegram.</p>
+<h3>Шаг 1. Скопируйте строку</h3>
+<button id="cp">Скопировать строку</button>
+<button id="show" type="button" style="background:#e5e5ea;color:#1c1c1e">Показать строку</button>
+<textarea id="s" rows="6" readonly hidden></textarea>
+<h3>Шаг 2. Откройте Render</h3>
+<a href="{render_env}" target="_blank" rel="noopener"><button type="button">Открыть Render → Environment</button></a>
+<h3>Шаг 3. Вставьте строку в Render</h3>
+<p><b>Edit</b> → поле значения у <code>TELEGRAM_SESSION</code> → вставить → <b>Save, rebuild, and deploy</b>.
+Сервер перезапустится за 2–3 минуты.</p>
+{guides.CSS}{guides.RENDER}</div>
 <script>
-const id = "{pid}", k = "{key}";
+const id = "{pid}", k = "{key}"; let session = "";
+function done(name, sess) {{
+  session = sess; wait.hidden = true; pw.hidden = true;
+  st.textContent = "Вошли как " + name; ok.hidden = false;
+}}
 async function poll() {{
   const r = await fetch(`/setup/status?id=${{id}}&k=${{k}}`); const j = await r.json();
   if (j.status === "pending") {{ if (j.qr) qr.src = j.qr; if (j.url) tglink.href = j.url; return setTimeout(poll, 2000); }}
-  qr.hidden = true; tglink.hidden = true;
+  wait.hidden = true;
   if (j.status === "need_2fa") {{ st.textContent = ""; pw.hidden = false; return; }}
-  if (j.status === "ok") {{ st.textContent = "Вошли как " + j.name; ok.hidden = false; s.value = j.session; return; }}
+  if (j.status === "ok") return done(j.name, j.session);
   st.textContent = "Не получилось (" + (j.error || j.status) + "). Обновите страницу и попробуйте снова.";
 }}
 pb.onclick = async () => {{
   const r = await fetch("/setup/2fa", {{method: "POST", headers: {{"Content-Type": "application/json"}},
     body: JSON.stringify({{id, k, password: p.value}})}});
   const j = await r.json(); if (j.error) {{ st.textContent = j.error; return; }}
-  pw.hidden = true; st.textContent = "Вошли как " + j.name; ok.hidden = false; s.value = j.session;
+  done(j.name, j.session);
 }};
-cp.onclick = () => {{ navigator.clipboard.writeText(s.value); cp.textContent = "Скопировано"; }};
+cp.onclick = async () => {{
+  try {{ await navigator.clipboard.writeText(session); cp.textContent = "Скопировано ✓ — теперь шаг 2"; }}
+  catch (e) {{ s.value = session; s.hidden = false; s.select(); cp.textContent = "Выделено — нажмите Ctrl+C / Копировать"; }}
+}};
+show.onclick = () => {{ s.value = session; s.hidden = !s.hidden; show.textContent = s.hidden ? "Показать строку" : "Скрыть строку"; }};
 poll();
 </script>""")
 

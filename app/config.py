@@ -16,6 +16,7 @@ TELEGRAM_API_HASH = _env("TELEGRAM_API_HASH")
 _session = _env("TELEGRAM_SESSION")
 TELEGRAM_SESSION = "" if _session == "-" else _session  # "-" = not set yet
 TIMEZONE = _env("TIMEZONE", "Europe/Moscow")
+RENDER_SERVICE_ID = _env("RENDER_SERVICE_ID")  # set by Render automatically
 
 # Render sets RENDER_EXTERNAL_URL automatically; PUBLIC_URL overrides it.
 PUBLIC_URL = (_env("PUBLIC_URL") or _env("RENDER_EXTERNAL_URL") or "http://localhost:8000").rstrip("/")
