@@ -13,7 +13,7 @@ SECRET_KEY = _env("SECRET_KEY").encode()
 ADMIN_PASSWORD = _env("ADMIN_PASSWORD")
 TELEGRAM_API_ID = int(_env("TELEGRAM_API_ID", "0") or 0)
 TELEGRAM_API_HASH = _env("TELEGRAM_API_HASH")
-TELEGRAM_SESSION = _env("TELEGRAM_SESSION")
+TELEGRAM_SESSION = _env("TELEGRAM_SESSION").strip("-")  # "-" = not set yet
 TIMEZONE = _env("TIMEZONE", "Europe/Moscow")
 
 # Render sets RENDER_EXTERNAL_URL automatically; PUBLIC_URL overrides it.
