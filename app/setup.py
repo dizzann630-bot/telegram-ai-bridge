@@ -91,7 +91,11 @@ async def setup_submit(request: Request):
     key = sign("setup", {"id": pid}, LIFETIME)
     return page("Подключение Telegram", f"""
 <p>На телефоне: <b>Telegram → Настройки → Устройства → Подключить устройство</b> и наведите камеру.</p>
-<img id="qr" src="{_qr_png(qr.url)}" alt="QR"><p id="st" class="muted">Жду сканирования…</p>
+<img id="qr" src="{_qr_png(qr.url)}" alt="QR">
+<p class="muted">Открыли эту страницу на том же телефоне? Отсканировать свой экран нельзя —
+попробуйте кнопку ниже или откройте страницу на компьютере.</p>
+<a id="tglink" href="{qr.url}"><button type="button">Открыть в Telegram на этом телефоне</button></a>
+<p id="st" class="muted">Жду сканирования…</p>
 <div id="pw" hidden><p>На аккаунте включён облачный пароль. Введите его (он никуда не сохраняется):</p>
 <input id="p" type="password"><button id="pb">Войти</button></div>
 <div id="ok" hidden><p><b>Готово!</b> Скопируйте строку ниже и вставьте в Render →
@@ -102,8 +106,8 @@ async def setup_submit(request: Request):
 const id = "{pid}", k = "{key}";
 async function poll() {{
   const r = await fetch(`/setup/status?id=${{id}}&k=${{k}}`); const j = await r.json();
-  if (j.status === "pending") {{ if (j.qr) qr.src = j.qr; return setTimeout(poll, 2000); }}
-  qr.hidden = true;
+  if (j.status === "pending") {{ if (j.qr) qr.src = j.qr; if (j.url) tglink.href = j.url; return setTimeout(poll, 2000); }}
+  qr.hidden = true; tglink.hidden = true;
   if (j.status === "need_2fa") {{ st.textContent = ""; pw.hidden = false; return; }}
   if (j.status === "ok") {{ st.textContent = "Вошли как " + j.name; ok.hidden = false; s.value = j.session; return; }}
   st.textContent = "Не получилось (" + (j.error || j.status) + "). Обновите страницу и попробуйте снова.";
@@ -132,7 +136,7 @@ async def setup_status(request: Request):
         return JSONResponse({"status": "expired"}, status_code=404)
     result = {"status": item["status"]}
     if item["status"] == "pending":
-        result["qr"] = _qr_png(item["qr"].url)
+        result.update(qr=_qr_png(item["qr"].url), url=item["qr"].url)
     elif item["status"] == "ok":
         result.update(name=item["name"], session=item["session"])
         _pending.pop(request.query_params["id"], None)  # show the session only once
