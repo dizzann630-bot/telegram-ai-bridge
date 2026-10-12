@@ -164,7 +164,7 @@ async def health(request):
                          "telegram_configured": bool(config.TELEGRAM_SESSION),
                          "telegram_keys_set": bool(config.TELEGRAM_API_ID and config.TELEGRAM_API_HASH),
                          "password_set": config.password_ready(),
-                         "password_length": len(config.ADMIN_PASSWORD)})
+                         "password_too_short": 0 < len(config.ADMIN_PASSWORD) < config.MIN_PASSWORD_LENGTH})
 
 
 mcp.custom_route("/login", methods=["GET"])(oauth.login_page)
