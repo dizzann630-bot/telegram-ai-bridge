@@ -42,12 +42,14 @@ https://github.com/dizzann630-bot/telegram-ai-bridge (бесплатный хо�
   Дальше:
   3. Выключите VPN.
   4. В папке C:\zapret дважды кликните general.bat → «Да». Чёрное окно не закрывайте.
+     Обязательно, даже если сайт и так открывается: без zapret код входа не придёт.
   5. Откройте https://my.telegram.org → номер полностью, с +7 → Next →
      код придёт в приложение Telegram (не SMS) → введите → Sign In.
   6. «API development tools» → заполните:
      App title: AI Bridge, Short name: aibridge12345 (любые 5 цифр), Platform: Desktop,
      остальное пусто → «Create application».
-     Если сайт не открывается или пишет ERROR: закройте чёрное окно, откройте
+     Если код не пришёл за 2 минуты, сайт пишет ERROR или не открывается:
+     закройте чёрное окно, откройте
      C:\zapret\lists\list-general-user.txt Блокнотом, допишите строку telegram.org,
      сохраните, запустите general (ALT).bat → «Да» и повторите с п. 5.
      Не помогло — general (ALT2).bat, потом (ALT3) и т. д.
