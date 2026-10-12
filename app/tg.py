@@ -68,7 +68,7 @@ def line(m, sender_names: dict | None = None) -> str:
 
 
 def _name(entity) -> str:
-    if isinstance(entity, types.User):
+    if isinstance(entity, types.User) or hasattr(entity, "first_name"):
         return " ".join(x for x in (entity.first_name, entity.last_name) if x) or str(entity.id)
     return getattr(entity, "title", str(getattr(entity, "id", "")))
 
@@ -132,27 +132,6 @@ async def search(query: str, dialog_id: int = 0, limit: int = 30) -> dict:
             chat = "" if dialog_id else f"[чат {utils.get_peer_id(m.peer_id)}] "
             rows.append(chat + line(m, names))
     return {"query": query, "results": "\n".join(rows) or "Ничего не найдено"}
-
-
-async def export_chat(dialog_id: int, after_id: int = 0, max_chars: int = 40000) -> dict:
-    """Whole history oldest-first in parts; continue with after_id=next_after_id."""
-    max_chars = max(2000, min(max_chars, 80000))
-    out, size, last_id, complete = [], 0, after_id, True
-    async with client() as c:
-        d = await _dialog(c, dialog_id)
-        names: dict = {}
-        async for m in c.iter_messages(d.input_entity, reverse=True, min_id=after_id):
-            if m.sender_id and m.sender_id not in names and not m.out:
-                s = m.sender or await m.get_sender()
-                names[m.sender_id] = _name(s) if s else str(m.sender_id)
-            row = line(m, names)
-            if size + len(row) > max_chars:
-                complete = False
-                break
-            out.append(row)
-            size += len(row) + 1
-            last_id = m.id
-    return {"chat": d.name, "text": "\n".join(out), "next_after_id": last_id, "complete": complete}
 
 
 async def channel_info(channel: str) -> dict:

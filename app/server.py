@@ -8,11 +8,12 @@ from mcp.types import ToolAnnotations
 from pydantic import BaseModel, ConfigDict
 from starlette.responses import JSONResponse
 
-from . import config, oauth, setup, tg, uploads
+from . import config, exports, oauth, setup, tg, uploads
 
 INSTRUCTIONS = """Доступ к Telegram владельца сервера.
 - Найти чат: list_chats (id нужен всем остальным инструментам).
-- Читать: read_chat (последние сообщения), export_chat (вся переписка частями, продолжай с next_after_id),
+- Читать: read_chat (несколько последних сообщений). Всю переписку или период — только export_chat,
+  затем read_export по частям (не листай read_chat); если complete=false — export_chat с after=<resume_after>.
   search_messages (по одному чату или везде, dialog_id=0).
 - Каналы: channel_info, similar_channels (похожие каналы).
 - Файлы: в ChatGPT прикреплённые пользователем файлы передай в attach_chatgpt_files; иначе get_upload_link
@@ -80,9 +81,24 @@ async def search_messages(query: str, dialog_id: int = 0, limit: int = 30) -> di
 
 
 @mcp.tool(annotations=READ)
-async def export_chat(dialog_id: int, after_id: int = 0, max_chars: int = 40000) -> dict:
-    """Вся переписка от старых к новым, частями. Если complete=false — вызови снова с after_id=next_after_id."""
-    return await tg.export_chat(dialog_id, after_id, max_chars)
+async def export_chat(dialog_id: int, date_from: str = "", date_to: str = "", after: str = "",
+                      sender_id: int = 0, with_ids: bool = False, chunk_tokens: int = 25000,
+                      time_budget_s: int = 40) -> dict:
+    """Вся переписка (или период date_from..date_to, YYYY-MM-DD по Москве) одним заходом на сервере.
+
+    Текст по дням ("=== 12.09.2026 ===", затем "14:03 Имя: текст [файл: a.xlsx]"), от старых к новым,
+    разбит на части примерно по chunk_tokens. Читай части через read_export или давай пользователю
+    download_url (.txt). Чтение ограничено time_budget_s (до 90 с, примерно 10-15 тыс. сообщений);
+    если complete=false — вызови снова с after=<resume_after>. sender_id — только один отправитель,
+    with_ids — добавить номера сообщений и ответов. Экспорт хранится 1 час."""
+    return await exports.export_chat(dialog_id, date_from, date_to, after, sender_id, with_ids,
+                                     chunk_tokens, time_budget_s=time_budget_s)
+
+
+@mcp.tool(annotations=READ)
+async def read_export(export_id: str, part: int = 1) -> dict:
+    """Текст одной части экспорта из export_chat."""
+    return exports.get_part(export_id, part)
 
 
 @mcp.tool(annotations=READ)
@@ -173,6 +189,7 @@ mcp.custom_route("/setup", methods=["GET"])(setup.setup_page)
 mcp.custom_route("/setup", methods=["POST"])(setup.setup_submit)
 mcp.custom_route("/setup/status", methods=["GET"])(setup.setup_status)
 mcp.custom_route("/setup/2fa", methods=["POST"])(setup.setup_2fa)
+mcp.custom_route("/export.txt", methods=["GET"])(exports.download)
 mcp.custom_route("/upload", methods=["GET"])(uploads.upload_page)
 mcp.custom_route("/upload", methods=["POST"])(uploads.upload_submit)
 
