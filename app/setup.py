@@ -96,9 +96,11 @@ async def setup_submit(request: Request):
 <div id="wait">
 <div id="m-phone"><h3>Вход по номеру телефона</h3>
 <p class="muted">Удобно, если вы открыли страницу на телефоне.</p>
-<div id="ph1"><input id="phone" type="tel" placeholder="+7 999 123-45-67" autocomplete="tel">
+<div id="ph1"><p class="err"><b>Номер полностью, с кодом страны:</b> +7 999 123-45-67.
+Без «+7» (или с 8 в начале) код может не прийти.</p>
+<input id="phone" type="tel" placeholder="+7 999 123-45-67" autocomplete="tel">
 <button id="sendcode">Получить код</button></div>
-<div id="ph2" hidden><p>Код пришёл <b>в приложение Telegram</b> (чат «Telegram»), не в SMS.
+<div id="ph2" hidden><p>Код отправлен на <b id="sentto"></b>. Он приходит <b>в приложение Telegram</b> (чат «Telegram»), не в SMS.
 Откройте Telegram, скопируйте код и вернитесь сюда.</p>
 <input id="code" inputmode="numeric" autocomplete="one-time-code" placeholder="Код из Telegram">
 <button id="sendlogin">Войти</button></div></div>
@@ -151,7 +153,7 @@ sendcode.onclick = async () => {{
   st.textContent = "Отправляю код…";
   const j = await post("/setup/phone", {{phone: phone.value}});
   if (j.error) {{ st.textContent = j.error; return; }}
-  st.textContent = ""; ph1.hidden = true; ph2.hidden = false; code.focus();
+  st.textContent = ""; sentto.textContent = j.phone; ph1.hidden = true; ph2.hidden = false; code.focus();
 }};
 sendlogin.onclick = async () => {{
   st.textContent = "Вхожу…";
@@ -214,15 +216,25 @@ async def setup_2fa(request: Request):
     return JSONResponse({"name": item["name"], "session": item["session"]})
 
 
+def normalize_phone(raw: str) -> str:
+    """'+7 (999) 123-45-67' / '89991234567' / '79991234567' -> '+79991234567'; '' if too short."""
+    digits = "".join(ch for ch in raw if ch.isdigit())
+    if len(digits) == 11 and digits.startswith("8") and not raw.strip().startswith("+"):
+        digits = "7" + digits[1:]  # Russian habit: 8 instead of +7
+    if len(digits) == 10 and digits.startswith("9") and not raw.strip().startswith("+"):
+        digits = "7" + digits  # 999... without country code
+    return "+" + digits if 11 <= len(digits) <= 15 else ""
+
+
 async def setup_phone(request: Request):
     """Phone-number login, step 1: Telegram sends a code into the Telegram app."""
     body = await request.json()
     item = _item(str(body.get("id", "")), str(body.get("k", "")))
     if not item or item["status"] != "pending":
         return JSONResponse({"error": "Сессия входа устарела, обновите страницу"}, status_code=404)
-    phone = "".join(ch for ch in str(body.get("phone", "")) if ch.isdigit() or ch == "+")
-    if len(phone.lstrip("+")) < 10:
-        return JSONResponse({"error": "Введите номер полностью, с кодом страны (+7…)"}, status_code=400)
+    phone = normalize_phone(str(body.get("phone", "")))
+    if not phone:
+        return JSONResponse({"error": "Введите номер полностью, с кодом страны: +7 999 123-45-67"}, status_code=400)
     try:
         sent = await item["client"].send_code_request(phone)
     except PhoneNumberInvalidError:
@@ -230,7 +242,7 @@ async def setup_phone(request: Request):
     except FloodWaitError as exc:
         return JSONResponse({"error": f"Telegram просит подождать {exc.seconds // 60 + 1} мин."}, status_code=429)
     item.update(phone=phone, phone_code_hash=sent.phone_code_hash)
-    return JSONResponse({"sent": True})
+    return JSONResponse({"sent": True, "phone": phone})
 
 
 async def setup_code(request: Request):

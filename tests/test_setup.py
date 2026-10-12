@@ -78,7 +78,10 @@ def test_phone_login_and_2fa():
     page, pid, key = loop.run_until_complete(start()())
     assert "Вход по номеру телефона" in page and "Вход по QR-коду" in page and "tglink" not in page
     assert call(setup.setup_phone, {"id": pid, "k": key, "phone": "123"})["error"]
-    assert call(setup.setup_phone, {"id": pid, "k": key, "phone": "+7 999 123-45-67"}) == {"sent": True}
+    assert call(setup.setup_phone, {"id": pid, "k": key, "phone": "+7 999 123-45-67"}) == {"sent": True, "phone": "+79991234567"}
+    for raw in ("89991234567", "8 (999) 123-45-67", "9991234567", "79991234567"):
+        assert setup.normalize_phone(raw) == "+79991234567", raw
+    assert setup.normalize_phone("+380 67 123 4567") == "+380671234567"
     assert "Неверный код" in call(setup.setup_code, {"id": pid, "k": key, "code": "00000"})["error"]
     ok = call(setup.setup_code, {"id": pid, "k": key, "code": "12 345"})
     assert ok == {"name": "Yooka", "session": "SESSION-STRING"}
