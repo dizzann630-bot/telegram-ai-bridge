@@ -159,8 +159,12 @@ async def schedule_post(dialog_id: int, scheduled_at: str, text: str = "", uploa
 # ---------------------------------------------------------------- web pages
 @mcp.custom_route("/health", methods=["GET"])
 async def health(request):
-    return JSONResponse({"ok": True, "telegram_configured": bool(config.TELEGRAM_SESSION),
-                         "password_set": config.password_ready()})
+    import os
+    return JSONResponse({"ok": True, "version": os.getenv("RENDER_GIT_COMMIT", "local")[:7],
+                         "telegram_configured": bool(config.TELEGRAM_SESSION),
+                         "telegram_keys_set": bool(config.TELEGRAM_API_ID and config.TELEGRAM_API_HASH),
+                         "password_set": config.password_ready(),
+                         "password_length": len(config.ADMIN_PASSWORD)})
 
 
 mcp.custom_route("/login", methods=["GET"])(oauth.login_page)
