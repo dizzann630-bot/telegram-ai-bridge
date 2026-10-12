@@ -114,16 +114,17 @@ async def setup_submit(request: Request):
 <input id="p" type="password"><button id="pb">Войти</button></div>
 <div id="ok" hidden>
 <p class="err">Не делайте скриншот и не пересылайте строку: она = полный доступ к вашему Telegram.</p>
-<h3>Шаг 1. Скопируйте строку</h3>
+<h3>Шаг 1. Посмотрите, что нужно сделать в Render</h3>
+<p>В Render: <b>Edit</b> → поле значения у <code>TELEGRAM_SESSION</code> (<b>5-я строка</b>) → вставить строку →
+<b>Save, rebuild, and deploy</b>. Сервер перезапустится за 2–3 минуты.</p>
+{guides.CSS}{guides.RENDER}
+<h3>Шаг 2. Скопируйте строку</h3>
 <button id="cp">Скопировать строку</button>
 <button id="show" type="button" style="background:#e5e5ea;color:#1c1c1e">Показать строку</button>
 <textarea id="s" rows="6" readonly hidden></textarea>
-<h3>Шаг 2. Откройте Render</h3>
-<a href="{render_env}" target="_blank" rel="noopener"><button type="button">Открыть Render → Environment</button></a>
-<h3>Шаг 3. Вставьте строку в Render</h3>
-<p><b>Edit</b> → поле значения у <code>TELEGRAM_SESSION</code> (5-я строка) → вставить →
-<b>Save, rebuild, and deploy</b>. Сервер перезапустится за 2–3 минуты.</p>
-{guides.CSS}{guides.RENDER}</div>
+<h3>Шаг 3. Откройте Render и сделайте шаг 1</h3>
+<button id="go" type="button" disabled>Сначала скопируйте строку (шаг 2)</button>
+<p class="muted">Render откроется в новой вкладке. Эту страницу не закрывайте, пока не сохраните.</p></div>
 <script>
 const id = "{pid}", k = "{key}"; let session = "", finished = false;
 // On a phone the phone-number method goes first, on a computer the QR.
@@ -167,10 +168,14 @@ pb.onclick = async () => {{
   if (j.error) {{ st.textContent = j.error; return; }}
   done(j.name, j.session);
 }};
+function unlock() {{ go.disabled = false; go.textContent = "Открыть Render → Environment"; }}
 cp.onclick = async () => {{
-  try {{ await navigator.clipboard.writeText(session); cp.textContent = "Скопировано ✓ — теперь шаг 2"; }}
+  try {{ await navigator.clipboard.writeText(session); cp.textContent = "Скопировано ✓ — теперь шаг 3"; }}
   catch (e) {{ s.value = session; s.hidden = false; s.select(); cp.textContent = "Выделено — нажмите Копировать"; }}
+  unlock();
 }};
+s.addEventListener("copy", unlock);
+go.onclick = () => window.open("{render_env}", "_blank", "noopener");
 show.onclick = () => {{ s.value = session; s.hidden = !s.hidden; show.textContent = s.hidden ? "Показать строку" : "Скрыть строку"; }};
 poll();
 </script>""")

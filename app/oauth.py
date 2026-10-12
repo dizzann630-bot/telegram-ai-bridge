@@ -61,7 +61,7 @@ def page(title: str, body: str) -> HTMLResponse:
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>{html.escape(title)}</title>
 <style>body{{font:16px system-ui,sans-serif;max-width:440px;margin:40px auto;padding:0 16px;color:#1c1c1e}}
 input,button,textarea{{font:inherit;width:100%;box-sizing:border-box;padding:12px;margin:8px 0;border-radius:10px;border:1px solid #c7c7cc}}
-button{{background:#2a7de1;color:#fff;border:0;cursor:pointer}}.err{{color:#c62828}}.muted{{color:#6e6e73;font-size:14px}}
+button{{background:#2a7de1;color:#fff;border:0;cursor:pointer}}button:disabled{{background:#c7c7cc;color:#6e6e73;cursor:not-allowed}}.err{{color:#c62828}}.muted{{color:#6e6e73;font-size:14px}}
 code,textarea{{font-family:ui-monospace,monospace;font-size:13px}}img{{width:100%;image-rendering:pixelated}}</style>
 </head><body><h2>{html.escape(title)}</h2>{body}</body></html>""")
 
