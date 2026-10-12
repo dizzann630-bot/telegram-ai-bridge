@@ -1,4 +1,4 @@
-"""/setup: log the owner's Telegram account in by QR code, in the browser.
+"""/setup: log the owner's Telegram account in, in the browser: QR (computer) or phone number + code (phone).
 
 The result is a session string that the owner pastes into the Render secret
 TELEGRAM_SESSION. It never goes through the AI chat.
@@ -14,7 +14,8 @@ import time
 import qrcode
 from starlette.requests import Request
 from starlette.responses import JSONResponse
-from telethon.errors import PasswordHashInvalidError, SessionPasswordNeededError
+from telethon.errors import (FloodWaitError, PasswordHashInvalidError, PhoneCodeExpiredError,
+                             PhoneCodeInvalidError, PhoneNumberInvalidError, SessionPasswordNeededError)
 
 from . import config, guides
 from .oauth import guard, page
@@ -68,9 +69,9 @@ async def setup_page(request: Request):
     if not config.TELEGRAM_API_ID or not config.TELEGRAM_API_HASH:
         return page("Подключение Telegram", "<p class='err'>Сначала задайте TELEGRAM_API_ID и "
                     "TELEGRAM_API_HASH в настройках Render (Environment).</p>")
-    return page("Подключение Telegram", """<p>Введите пароль сервера (ADMIN_PASSWORD), затем
-отсканируйте QR телефоном.</p><form method="post"><input type="password" name="password"
-placeholder="Пароль сервера" required autofocus><button>Показать QR</button></form>""")
+    return page("Подключение Telegram", """<p>Введите пароль сервера (ADMIN_PASSWORD), который вы задали в Render.</p>
+<form method="post"><input type="password" name="password" placeholder="Пароль сервера" required autofocus>
+<button>Дальше</button></form>""")
 
 
 async def setup_submit(request: Request):
@@ -87,17 +88,26 @@ async def setup_submit(request: Request):
         return page("Подключение Telegram", f"<p class='err'>Не удалось связаться с Telegram: {exc}</p>")
     pid = secrets.token_hex(8)
     _pending[pid] = {"client": client, "qr": qr, "status": "pending", "created": time.time()}
-    asyncio.create_task(_wait(pid))
+    _pending[pid]["task"] = asyncio.create_task(_wait(pid))
     key = sign("setup", {"id": pid}, LIFETIME)
     render_env = (f"https://dashboard.render.com/web/{config.RENDER_SERVICE_ID}/env"
                   if config.RENDER_SERVICE_ID else "https://dashboard.render.com")
     return page("Подключение Telegram", f"""
-<div id="wait"><p>На телефоне: <b>Telegram → Настройки → Устройства → Подключить устройство</b> и наведите камеру.</p>
-<img id="qr" src="{_qr_png(qr.url)}" alt="QR">
-<p class="muted">Открыли эту страницу на том же телефоне? Отсканировать свой экран нельзя —
-попробуйте кнопку ниже или откройте страницу на компьютере.</p>
-<a id="tglink" href="{qr.url}"><button type="button">Открыть в Telegram на этом телефоне</button></a></div>
-<p id="st" class="muted">Жду сканирования…</p>
+<div id="wait">
+<div id="m-phone"><h3>Вход по номеру телефона</h3>
+<p class="muted">Удобно, если вы открыли страницу на телефоне.</p>
+<div id="ph1"><input id="phone" type="tel" placeholder="+7 999 123-45-67" autocomplete="tel">
+<button id="sendcode">Получить код</button></div>
+<div id="ph2" hidden><p>Код пришёл <b>в приложение Telegram</b> (чат «Telegram»), не в SMS.
+Откройте Telegram, скопируйте код и вернитесь сюда.</p>
+<input id="code" inputmode="numeric" autocomplete="one-time-code" placeholder="Код из Telegram">
+<button id="sendlogin">Войти</button></div></div>
+<div id="m-qr"><h3>Вход по QR-коду</h3>
+<p class="muted">Удобно, если страница открыта на компьютере: QR сканируете телефоном.</p>
+<p>Telegram на телефоне → <b>Настройки → Устройства → Подключить устройство</b> → наведите камеру.</p>
+<img id="qr" src="{_qr_png(qr.url)}" alt="QR"></div>
+</div>
+<p id="st" class="muted"></p>
 <div id="pw" hidden><p>На аккаунте включён облачный пароль. Введите его (он никуда не сохраняется):</p>
 <input id="p" type="password"><button id="pb">Войти</button></div>
 <div id="ok" hidden>
@@ -109,32 +119,55 @@ async def setup_submit(request: Request):
 <h3>Шаг 2. Откройте Render</h3>
 <a href="{render_env}" target="_blank" rel="noopener"><button type="button">Открыть Render → Environment</button></a>
 <h3>Шаг 3. Вставьте строку в Render</h3>
-<p><b>Edit</b> → поле значения у <code>TELEGRAM_SESSION</code> → вставить → <b>Save, rebuild, and deploy</b>.
-Сервер перезапустится за 2–3 минуты.</p>
+<p><b>Edit</b> → поле значения у <code>TELEGRAM_SESSION</code> (5-я строка) → вставить →
+<b>Save, rebuild, and deploy</b>. Сервер перезапустится за 2–3 минуты.</p>
 {guides.CSS}{guides.RENDER}</div>
 <script>
-const id = "{pid}", k = "{key}"; let session = "";
+const id = "{pid}", k = "{key}"; let session = "", finished = false;
+// On a phone the phone-number method goes first, on a computer the QR.
+if (matchMedia("(pointer: coarse)").matches) wait.prepend(document.getElementById("m-phone"));
+else wait.prepend(document.getElementById("m-qr"));
 function done(name, sess) {{
-  session = sess; wait.hidden = true; pw.hidden = true;
-  st.textContent = "Вошли как " + name; ok.hidden = false;
+  finished = true; session = sess; wait.hidden = true; pw.hidden = true;
+  st.textContent = "Вошли как " + name; ok.hidden = false; ok.scrollIntoView();
+}}
+function need2fa() {{ finished = true; wait.hidden = true; st.textContent = ""; pw.hidden = false; }}
+async function post(path, data) {{
+  const r = await fetch(path, {{method: "POST", headers: {{"Content-Type": "application/json"}},
+    body: JSON.stringify({{id, k, ...data}})}});
+  return r.json();
 }}
 async function poll() {{
+  if (finished) return;
   const r = await fetch(`/setup/status?id=${{id}}&k=${{k}}`); const j = await r.json();
-  if (j.status === "pending") {{ if (j.qr) qr.src = j.qr; if (j.url) tglink.href = j.url; return setTimeout(poll, 2000); }}
-  wait.hidden = true;
-  if (j.status === "need_2fa") {{ st.textContent = ""; pw.hidden = false; return; }}
+  if (finished) return;
+  if (j.status === "pending") {{ if (j.qr) qr.src = j.qr; return setTimeout(poll, 2000); }}
+  if (j.status === "need_2fa") return need2fa();
   if (j.status === "ok") return done(j.name, j.session);
+  wait.hidden = true;
   st.textContent = "Не получилось (" + (j.error || j.status) + "). Обновите страницу и попробуйте снова.";
 }}
+sendcode.onclick = async () => {{
+  st.textContent = "Отправляю код…";
+  const j = await post("/setup/phone", {{phone: phone.value}});
+  if (j.error) {{ st.textContent = j.error; return; }}
+  st.textContent = ""; ph1.hidden = true; ph2.hidden = false; code.focus();
+}};
+sendlogin.onclick = async () => {{
+  st.textContent = "Вхожу…";
+  const j = await post("/setup/code", {{code: code.value}});
+  if (j.error) {{ st.textContent = j.error; return; }}
+  if (j.need_2fa) return need2fa();
+  done(j.name, j.session);
+}};
 pb.onclick = async () => {{
-  const r = await fetch("/setup/2fa", {{method: "POST", headers: {{"Content-Type": "application/json"}},
-    body: JSON.stringify({{id, k, password: p.value}})}});
-  const j = await r.json(); if (j.error) {{ st.textContent = j.error; return; }}
+  const j = await post("/setup/2fa", {{password: p.value}});
+  if (j.error) {{ st.textContent = j.error; return; }}
   done(j.name, j.session);
 }};
 cp.onclick = async () => {{
   try {{ await navigator.clipboard.writeText(session); cp.textContent = "Скопировано ✓ — теперь шаг 2"; }}
-  catch (e) {{ s.value = session; s.hidden = false; s.select(); cp.textContent = "Выделено — нажмите Ctrl+C / Копировать"; }}
+  catch (e) {{ s.value = session; s.hidden = false; s.select(); cp.textContent = "Выделено — нажмите Копировать"; }}
 }};
 show.onclick = () => {{ s.value = session; s.hidden = !s.hidden; show.textContent = s.hidden ? "Показать строку" : "Скрыть строку"; }};
 poll();
@@ -154,7 +187,7 @@ async def setup_status(request: Request):
         return JSONResponse({"status": "expired"}, status_code=404)
     result = {"status": item["status"]}
     if item["status"] == "pending":
-        result.update(qr=_qr_png(item["qr"].url), url=item["qr"].url)
+        result["qr"] = _qr_png(item["qr"].url)
     elif item["status"] == "ok":
         result.update(name=item["name"], session=item["session"])
         _pending.pop(request.query_params["id"], None)  # show the session only once
@@ -175,6 +208,52 @@ async def setup_2fa(request: Request):
     except PasswordHashInvalidError:
         guard.failures.append(time.time())
         return JSONResponse({"error": "Неверный облачный пароль"}, status_code=400)
+    item["task"].cancel()
     await _finish(item)
     _pending.pop(str(body["id"]), None)
+    return JSONResponse({"name": item["name"], "session": item["session"]})
+
+
+async def setup_phone(request: Request):
+    """Phone-number login, step 1: Telegram sends a code into the Telegram app."""
+    body = await request.json()
+    item = _item(str(body.get("id", "")), str(body.get("k", "")))
+    if not item or item["status"] != "pending":
+        return JSONResponse({"error": "Сессия входа устарела, обновите страницу"}, status_code=404)
+    phone = "".join(ch for ch in str(body.get("phone", "")) if ch.isdigit() or ch == "+")
+    if len(phone.lstrip("+")) < 10:
+        return JSONResponse({"error": "Введите номер полностью, с кодом страны (+7…)"}, status_code=400)
+    try:
+        sent = await item["client"].send_code_request(phone)
+    except PhoneNumberInvalidError:
+        return JSONResponse({"error": "Telegram не знает такой номер"}, status_code=400)
+    except FloodWaitError as exc:
+        return JSONResponse({"error": f"Telegram просит подождать {exc.seconds // 60 + 1} мин."}, status_code=429)
+    item.update(phone=phone, phone_code_hash=sent.phone_code_hash)
+    return JSONResponse({"sent": True})
+
+
+async def setup_code(request: Request):
+    """Phone-number login, step 2: the code from the Telegram app."""
+    body = await request.json()
+    pid = str(body.get("id", ""))
+    item = _item(pid, str(body.get("k", "")))
+    if not item or "phone_code_hash" not in item:
+        return JSONResponse({"error": "Сначала запросите код"}, status_code=400)
+    if guard.locked():
+        return JSONResponse({"error": "Слишком много попыток, подождите 15 минут"}, status_code=429)
+    code = "".join(ch for ch in str(body.get("code", "")) if ch.isdigit())
+    try:
+        await item["client"].sign_in(item["phone"], code, phone_code_hash=item["phone_code_hash"])
+    except SessionPasswordNeededError:
+        item["status"] = "need_2fa"
+        return JSONResponse({"need_2fa": True})
+    except PhoneCodeInvalidError:
+        guard.failures.append(time.time())
+        return JSONResponse({"error": "Неверный код, проверьте и введите ещё раз"}, status_code=400)
+    except PhoneCodeExpiredError:
+        return JSONResponse({"error": "Код устарел — обновите страницу и запросите новый"}, status_code=400)
+    item["task"].cancel()
+    await _finish(item)
+    _pending.pop(pid, None)
     return JSONResponse({"name": item["name"], "session": item["session"]})
