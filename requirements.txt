@@ -1,0 +1,6 @@
+mcp>=1.28,<2
+telethon==1.44.0
+uvicorn[standard]==0.35.0
+httpx==0.28.1
+python-multipart==0.0.20
+qrcode[pil]>=7.4,<9
