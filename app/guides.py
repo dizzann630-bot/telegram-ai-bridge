@@ -41,22 +41,11 @@ CSS = """
 @media (prefers-reduced-motion:reduce){.guide *{animation:none!important}.scr.s3{opacity:1}}
 </style>"""
 
-TELEGRAM = """<div class="guide"><div class="phone">
-<div class="scr s1"><h4>Настройки</h4><div class="row"><span class="ico"></span>Мой профиль</div>
-<div class="row"><span class="ico"></span>Избранное</div><div class="row"><span class="ico"></span>Недавние звонки</div>
-<div class="row"><span class="ico"></span><b>Устройства</b></div><div class="row"><span class="ico"></span>Папки с чатами</div>
-<span class="tap"></span></div>
-<div class="scr s2"><h4>‹ Устройства</h4><div class="btn">Подключить устройство</div>
-<div class="row"><span class="ico"></span>Это устройство</div><span class="tap"></span></div>
-<div class="scr s3"><h4>Сканирование QR</h4><div style="margin:30px auto;width:110px;height:110px;border:3px solid #2a7de1;border-radius:12px"></div>
-<div class="row" style="border:0;justify-content:center">Наведите на QR на экране</div><span class="tap"></span></div>
-</div><div class="cap">Telegram → Настройки → Устройства → Подключить устройство → камера на QR</div></div>"""
-
 RENDER = """<div class="guide"><div class="rd">
 <div class="side"><div>Events</div><div>Logs</div><div class="env"><b>Environment</b></div><div>Settings</div></div>
 <div class="main"><div class="top">Environment Variables <span class="edit">Edit</span></div>
 <div class="kv"><span class="k">ADMIN_PASSWORD</span><span class="v">••••••••</span></div>
 <div class="kv"><span class="k">SECRET_KEY</span><span class="v">••••••••</span></div>
 <div class="kv target"><span class="k">TELEGRAM_SESSION</span><span class="v"><span class="dash">-</span><span class="typed">ваша_строка…</span></span></div>
-<span class="save">Save Changes</span></div></div>
-<div class="cap">Render → ваш сервис → Environment → Edit → TELEGRAM_SESSION → вставить → Save Changes</div></div>"""
+<span class="save">Save, rebuild, and deploy</span></div></div>
+<div class="cap">Render → ваш сервис → Environment → Edit → TELEGRAM_SESSION → вставить → Save, rebuild, and deploy</div></div>"""

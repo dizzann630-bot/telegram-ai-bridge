@@ -90,8 +90,7 @@ async def setup_submit(request: Request):
     asyncio.create_task(_wait(pid))
     key = sign("setup", {"id": pid}, LIFETIME)
     return page("Подключение Telegram", f"""
-{guides.CSS}<p>На телефоне: <b>Telegram → Настройки → Устройства → Подключить устройство</b> и наведите камеру.</p>
-{guides.TELEGRAM}
+<p>На телефоне: <b>Telegram → Настройки → Устройства → Подключить устройство</b> и наведите камеру.</p>
 <img id="qr" src="{_qr_png(qr.url)}" alt="QR">
 <p class="muted">Открыли эту страницу на том же телефоне? Отсканировать свой экран нельзя —
 попробуйте кнопку ниже или откройте страницу на компьютере.</p>
@@ -100,8 +99,8 @@ async def setup_submit(request: Request):
 <div id="pw" hidden><p>На аккаунте включён облачный пароль. Введите его (он никуда не сохраняется):</p>
 <input id="p" type="password"><button id="pb">Войти</button></div>
 <div id="ok" hidden><p><b>Готово!</b> Скопируйте строку ниже и вставьте в Render →
-ваш сервис → <b>Environment</b> → переменная <code>TELEGRAM_SESSION</code> → Save. Сервер перезапустится сам.</p>
-{guides.RENDER}
+ваш сервис → <b>Environment</b> → переменная <code>TELEGRAM_SESSION</code> → <b>Save, rebuild, and deploy</b>. Сервер перезапустится сам.</p>
+{guides.CSS}{guides.RENDER}
 <textarea id="s" rows="6" readonly></textarea><button id="cp">Скопировать</button>
 <p class="err">Эта строка = полный доступ к вашему Telegram. Не отправляйте её никому, даже ИИ.</p></div>
 <script>

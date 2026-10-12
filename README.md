@@ -31,7 +31,7 @@ MCP-сервер, через который ChatGPT, Claude и Claude Code ра�
    - `SECRET_KEY` Render создаст сам.
 3. Открой `https://<твой-сервис>.onrender.com/setup`, введи пароль, отсканируй QR
    (Telegram → Настройки → Устройства → Подключить устройство). Скопируй строку
-   и вставь в Render → Environment → `TELEGRAM_SESSION` → Save.
+   и вставь в Render → Environment → Edit → `TELEGRAM_SESSION` → Save, rebuild, and deploy.
 4. Подключи к ИИ адрес `https://<твой-сервис>.onrender.com/mcp`:
    - **ChatGPT**: Настройки → включить Developer Mode → Plugins → «+» → адрес → вход паролем.
    - **Claude**: Настройки → Коннекторы → добавить свой коннектор → адрес → вход паролем.
