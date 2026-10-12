@@ -34,9 +34,11 @@ https://github.com/dizzann630-bot/telegram-ai-bridge (бесплатный хо�
   (Если вы не в России — пропустите пункты 1, 3, 4 и 8, VPN не трогайте.)
 
   Пока VPN ещё включён:
-  1. Скачайте архив .zip (раздел Assets, только по этой ссылке):
-     https://github.com/Flowseal/zapret-discord-youtube/releases/latest
-     Правой кнопкой по архиву → «Извлечь всё» → в C:\zapret
+  1. Откройте https://github.com/Flowseal/zapret-discord-youtube/releases/latest
+     (только эту ссылку, копии из поиска бывают с вирусами).
+     Прокрутите вниз до раздела «Assets» и скачайте ТРЕТИЙ файл —
+     zapret-discord-youtube-<версия>.zip (не .rar, не .tar.gz, не «Source code»).
+     В папке «Загрузки»: правой кнопкой по архиву → «Извлечь всё» → в C:\zapret
      (если не даёт: Свойства архива → галочка «Разблокировать» → OK).
      Антивирус ругается на WinDivert — разрешите, это часть программы.
   2. Откройте Блокнот — туда сохраните ключи.
@@ -59,6 +61,7 @@ https://github.com/dizzann630-bot/telegram-ai-bridge (бесплатный хо�
      (и мне тоже). В разделе «Delete account» ничего не нажимайте.
   8. Закройте чёрное окно zapret и включите VPN.
   9. Вернитесь в этот чат и напишите «готово».
+  (Если ключи у вас уже есть — сразу напишите «готово».)
 
 ШАГ 2. GitHub.
 Открой https://github.com/dizzann630-bot/telegram-ai-bridge (если нужно — я войду
