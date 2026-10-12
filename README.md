@@ -20,6 +20,8 @@ MCP-сервер, через который ChatGPT, Claude и Claude Code ра�
 
 ## Установка
 
+Проще всего: скопируй [PROMPT.md](PROMPT.md) в ИИ-агента в браузере, он проведёт по шагам.
+
 1. Ключи Telegram: <https://my.telegram.org> → API development tools → создать приложение →
    скопировать `api_id` и `api_hash`.
    Из России: сайт работает только без VPN и с обходом блокировки (zapret), иначе форма даёт `ERROR`.
@@ -27,13 +29,13 @@ MCP-сервер, через который ChatGPT, Claude и Claude Code ра�
    Render спросит переменные:
    - `ADMIN_PASSWORD` — придумай пароль от 10 символов (им ты будешь подключать ИИ);
    - `TELEGRAM_API_ID`, `TELEGRAM_API_HASH` — из шага 1;
-   - `TELEGRAM_SESSION` — оставь пустым;
+   - `TELEGRAM_SESSION` — впиши `-`;
    - `SECRET_KEY` Render создаст сам.
-3. Открой `https://<твой-сервис>.onrender.com/setup`, введи пароль, отсканируй QR
-   (Telegram → Настройки → Устройства → Подключить устройство). Скопируй строку
-   и вставь в Render → Environment → Edit → `TELEGRAM_SESSION` → Save, rebuild, and deploy.
+3. Открой `https://<твой-сервис>.onrender.com/setup`, введи пароль, войди по номеру телефона
+   или по QR. Скопируй строку и вставь в Render → Environment → Edit → `TELEGRAM_SESSION`
+   (5-я строка) → Save, rebuild, and deploy.
 4. Подключи к ИИ адрес `https://<твой-сервис>.onrender.com/mcp`:
-   - **ChatGPT**: Настройки → включить Developer Mode → Plugins → «+» → адрес → вход паролем.
+   - **ChatGPT** (в браузере на компьютере): Плагины → «Добавить» → свой MCP-сервер → адрес → OAuth → вход паролем.
    - **Claude**: Настройки → Коннекторы → добавить свой коннектор → адрес → вход паролем.
    - **Claude Code**: `claude mcp add --transport http telegram https://<твой-сервис>.onrender.com/mcp`, затем `/mcp` → вход.
 
