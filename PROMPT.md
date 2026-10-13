@@ -43,7 +43,7 @@ https://github.com/dizzann630-bot/telegram-ai-bridge (бесплатный хо�
 
 **Дальше**
 2. **Выключите VPN.**
-3. В папке **`C:\zapret`** дважды кликните **`general.bat`** → **«Да»**. Чёрное окно не закрывайте.
+3. В папке **`C:\zapret`** дважды кликните **`general.bat`**. Если Windows спросит разрешение — **«Да»**. Чёрное окно не закрывайте. Если вместо этого пишет «zapret is ALREADY RUNNING as service» — всё хорошо, он уже работает: нажмите любую клавишу и идите дальше.
 4. Откройте https://my.telegram.org → номер **полностью, с +7** → **Next** → код придёт **в приложение Telegram** (не SMS) → введите → **Sign In**.
 5. **API development tools** → заполните: **App title** `AI Bridge`, **Short name** `aibridge` + любые 5 цифр, **Platform** `Desktop`, остальное пусто → **Create application**. Если там уже есть ключи — ничего не заполняйте.
 6. Вкладку с **api_id** и **api_hash** **не закрывайте** — они понадобятся позже. api_hash никому не отправляйте. В **Delete account** ничего не нажимайте.
