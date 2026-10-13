@@ -20,7 +20,7 @@ MCP-сервер, через который ChatGPT, Claude и Claude Code ра�
 
 ## Установка
 
-Проще всего: скопируй [PROMPT.md](PROMPT.md) в ИИ-агента в браузере, он проведёт по шагам.
+Проще всего: скопируй [PROMPT.md](PROMPT.md) в ChatGPT (режим «Работа») — он проведёт по шагам, а ты делаешь всё руками.
 
 1. Ключи Telegram: <https://my.telegram.org> → API development tools → создать приложение →
    скопировать `api_id` и `api_hash`.
